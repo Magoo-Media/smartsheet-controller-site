@@ -41,6 +41,14 @@ export function requireEnv(name) {
   return value;
 }
 
+export function requireEnvAny(names) {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) return value;
+  }
+  throw new Error(`Missing server configuration: ${names.join(" or ")}`);
+}
+
 export function normalizeRegion(value) {
   return ALLOWED_REGIONS.has(value) ? value : "us";
 }
@@ -74,8 +82,8 @@ export function parseState(state) {
 }
 
 async function redis(command, ...args) {
-  const url = requireEnv("UPSTASH_REDIS_REST_URL").replace(/\/$/, "");
-  const token = requireEnv("UPSTASH_REDIS_REST_TOKEN");
+  const url = requireEnvAny(["UPSTASH_REDIS_REST_URL", "KV_REST_API_URL"]).replace(/\/$/, "");
+  const token = requireEnvAny(["UPSTASH_REDIS_REST_TOKEN", "KV_REST_API_TOKEN"]);
   const response = await fetch(`${url}/${command}/${args.map(encodeURIComponent).join("/")}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
