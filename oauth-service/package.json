@@ -1,0 +1,8 @@
+{
+  "name": "smartsheet-controller-oauth",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}
