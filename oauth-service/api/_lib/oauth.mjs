@@ -8,6 +8,9 @@ const API_BASE_URLS = {
   au: "https://api.smartsheet.au/2.0",
   gov: "https://api.smartsheetgov.com/2.0",
 };
+// Required by the complete ten-action public release:
+// sheet reads/writes, contact lookup, and template-based sheet creation.
+export const OAUTH_SCOPES = ["READ_SHEETS", "WRITE_SHEETS", "READ_CONTACTS", "CREATE_SHEETS"];
 
 export function json(res, status, body) {
   res.statusCode = status;
@@ -123,7 +126,7 @@ export function buildAuthorizeUrl(state) {
   const params = new URLSearchParams({
     response_type: "code",
     client_id: requireEnv("SMARTSHEET_CLIENT_ID"),
-    scope: "READ_SHEETS WRITE_SHEETS",
+    scope: OAUTH_SCOPES.join(" "),
     state,
   });
   return `https://app.smartsheet.com/b/authorize?${params.toString()}`;
@@ -147,6 +150,14 @@ export async function exchangeRefreshToken(refreshToken, region) {
     client_secret: requireEnv("SMARTSHEET_CLIENT_SECRET"),
   });
   return tokenRequest(apiBase(region), body);
+}
+
+export async function revokeAccessToken(accessToken, region) {
+  const response = await fetch(`${apiBase(region)}/token`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) throw new Error(`Smartsheet token revocation failed with HTTP ${response.status}.`);
 }
 
 async function tokenRequest(baseUrl, body) {
